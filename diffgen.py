@@ -6,38 +6,9 @@
 
 # Theres also the possibilty of finding the new machines that were found.
 
-import csv, os
+import csv, os, subprocess, sys
+from utility import retlist
 
-def retlist(filename):
-  #This fucntion will return a dictionary by client, filled with dictionaries by 
-  # device
-  # to make diffing more efficient in memory
-  dictionary = {}
-  with open(filename) as csv_file:
-    csv_reader= csv.reader(csv_file, delimiter=",")
-    line_count = 0
-    dictionary = {}
-    
-    for row in csv_reader:
-      if line_count == 0:
-        pass 
-      else:
-        worksrv = row[1]
-        client = row[2]
-        site = row[3]
-        device = row[4]
-        freq = row[9]
-        patch = row[33]
-        backup = row[38]
-        mav = row[40]
-        if client in dictionary:
-          
-          dictionary[client][device] = [worksrv, client, site, device, freq, patch, backup, mav]
-          
-        else:
-          dictionary[client] = {device:[worksrv, client, site, device, freq, patch, backup, mav]}
-      line_count += 1
-    return dictionary
 
 def writecsv(dictionary, outputname):
   # this function will export our dictionary dictionary list into a csv file for andrew
@@ -91,6 +62,12 @@ def main(oldfile, newfile, outputname="diffout.csv"):
   diffdict = compdiff(olddict,newdict)
   #print(diffdict)
   writecsv(diffdict, outputname)
+  if sys.platform.startswith('darwin'):
+    subprocess.call(('open', outputname))
+  if os.name == 'nt': # For Windows
+    os.startfile(outputname)
+  elif os.name == 'posix': # For Linux, Mac, etc.
+    subprocess.call(('xdg-open', outputname))
 
 
 #main()

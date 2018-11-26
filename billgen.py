@@ -4,57 +4,8 @@
 # it will also be able to diff between an old report and a new report
 # in order to find machines that have fallen off of remote management
 
-import csv, time, datetime, os
-
-class bcolors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-
-
-def retlist(filename):
-  #This fucntion returns a dictioanry of dictionaries that represent devices
-  # elements required include
-    # backup
-    # managed antivirus
-    # patch management
-    # type - workstation or server
-    # client name
-  # dictionary keys will be defined by client, secondary dictionary will be by device name
-  dictionary = {}
-  with open(filename) as csv_file:
-    csv_reader= csv.reader(csv_file, delimiter=",")
-    line_count = 0
-    dictionary = {}
-    for row in csv_reader:
-      if line_count == 0:
-        pass # skip header
-      else:
-        # there are 44 fields included in the inventory report
-        worksrv = row[1] # 1
-        client = row[2] # 2
-        site = row[3] # 3
-        device = row[4] # 4
-        freq = row[9] # 9
-        patch = row[33] # 33
-        backup = row[38] # 38
-        mav = row[40] # 39
-
-        if client in dictionary:
-          swaplist = dictionary[client]
-          swaplist.append([worksrv, client, site, device, freq, patch, backup, mav])
-          dictionary[client] = swaplist
-        else:
-          dictionary[row[2]] = [[worksrv, client, site, device, freq, patch, backup, mav]]
-
-      line_count += 1
-    return dictionary
-
+import csv, os, subprocess, sys
+from utility import *
 
 def clientmach(listof):
   # enumerate the clients and return how many machines they have
@@ -96,9 +47,9 @@ def clientmach(listof):
         if not (item[5] == "Not Installed"): # rm
           servers += 1
     
-    #print(bcolors.HEADER, key, ": ", bcolors.ENDC)
+    print(bcolors.HEADER, key, ": ", bcolors.ENDC)
     
-    #print(bcolors.OKBLUE, "     ","Total Workstations:  ", total_wk, "  WRKSTN: ", workstations, "  SRVR: ", servers, " MAV: ", mav, "  WBCKP: ", wbackups, " SBCKP: ", sbackups, bcolors.ENDC)
+    print(bcolors.OKBLUE, "     ","Total Workstations:  ", total_wk, "  WRKSTN: ", workstations, "  SRVR: ", servers, " MAV: ", mav, "  WBCKP: ", wbackups, " SBCKP: ", sbackups, bcolors.ENDC)
    
     newdict[key] = [total_wk, workstations, servers, mav, wbackups, sbackups]
   return newdict
@@ -110,6 +61,7 @@ def writecsv(dictionary, outputname):
     open(outputname, 'w').close()
   except:
     print("Epic fail!")
+    #exit()
 
   with open(outputname, "a") as f:
     wr = csv.writer(f, quoting=csv.QUOTE_ALL)
@@ -123,6 +75,11 @@ def main(filename, outputname="billing.csv"):
   dictionary = retlist(filename)
   csvdict = clientmach(dictionary)
   writecsv(csvdict, outputname)
+  if sys.platform.startswith('darwin'):
+    subprocess.call(('open', outputname))
+  elif os.name == 'nt': # For Windows
+    os.startfile(outputname)
+  elif os.name == 'posix': # For Linux, Mac, etc.
+    subprocess.call(('xdg-open', outputname))
 
-
-#main()
+#main(outputname = "notbilling.csv")
