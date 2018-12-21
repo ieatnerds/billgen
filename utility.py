@@ -40,7 +40,7 @@ def retlist(filename):
         freq = row[9] # 9
         patch = row[33] # 33
         backup = row[38] # 38
-        mav = row[39] # 39
+        mav = row[39] # 40
 
         if client in dictionary:
           swaplist = dictionary[client]
